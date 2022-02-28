@@ -30,8 +30,7 @@ it as long as you acknowledge that:
 Usage
 =====
 
-Please, install all the dependencies in `requirements.txt` before running
-it.
+Please, install all the dependencies in `requirements.txt`.
 
 
 To give you an idea of how to use these scripts, consider the following
