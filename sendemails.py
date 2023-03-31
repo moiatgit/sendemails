@@ -42,7 +42,7 @@ def create_message(specs:EmailSpecs):
             elif main_type == 'audio':
                 msg = MIMEAudio(fp.read(), _subtype=sub_type)
             else:
-                print(f"XXX adding attachment {main_type}/{sub_type}")
+                print(f"Adding attachment {main_type}/{sub_type}: {path}")
                 msg = MIMEBase(main_type, sub_type)
                 msg.set_payload(fp.read())
         filename = path.name
