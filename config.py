@@ -56,5 +56,5 @@ time_sleep_seconds = config.get('time_sleep_seconds', 1)
 
 # check paths actualy exist
 assert client_secret_path.is_file(), f"file not found: {client_secret_path}"
-assert token_path.is_file(), f"file not found: {token_path}"
+#assert token_path.is_file(), f"file not found: {token_path}"
 assert email_folder.is_dir(), f"folder not found: {email_folder}"

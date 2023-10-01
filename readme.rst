@@ -7,7 +7,7 @@ that uses a gmail account to send multiple emails.
 
 It has been tested with Python 3.7+ under GNU/Linux.
 
-Make sure you read the 
+Make sure you read the license
 
 License
 =======

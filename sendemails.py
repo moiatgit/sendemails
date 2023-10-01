@@ -5,6 +5,9 @@
     This program has been partially obtained from
     https://developers.google.com/gmail/api/guides/sending
 """
+import datetime
+from pathlib import Path
+from rich import print
 
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
@@ -50,7 +53,6 @@ def create_message(specs:EmailSpecs):
         email.encoders.encode_base64(msg)
         return msg
 
-    #message = MIMEMultipart('alternative')
     message = MIMEMultipart()
     message['to'] = specs.to
     message['from'] = config.sender
@@ -58,9 +60,23 @@ def create_message(specs:EmailSpecs):
     message.attach(MIMEText(specs.text, 'html'))
     if specs.attachment is not None:
         message.attach(process_attachment(specs.attachment))
-
-    print("Email for %s" % specs.to)
     return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
+
+
+# XXX convert this to a generator
+def unsent_emails():
+    """ It returns a list of EmailSpecs for the emails found
+        Renames all the files so they get the postfix «current_date».sent
+    """
+    result = []
+    path = Path(config.email_folder)
+    if not path.is_dir():
+        return result
+    for entry in list(path.glob('*.txt')):
+        result_ok, specs = checkemails.get_email_file_contents(entry)
+        if result_ok:
+            result.append(specs)
+    return result
 
 
 def send_message(service, message):
@@ -76,12 +92,11 @@ def send_message(service, message):
     user_id = 'me'  # user_id: User's email address. The special value "me" can be used to indicate the authenticated user.
     try:
         message = (service.users().messages().send(userId=user_id, body=message).execute())
-        print('Message Id: %s' % message['id'])
         return message
     except errors.HttpError as error:
-        print('An error occurred: %s' % error)
+        return {'error': f'sendemails captured the exception: {error}'}
 
-print("Sending messages")
+print("[underline bold]Sending messages[/]\n") 
 
 store = file.Storage(config.token_path)
 creds = store.get()
@@ -90,10 +105,27 @@ if not creds or creds.invalid:
     creds = tools.run_flow(flow, store)
 service = build('gmail', 'v1', http=creds.authorize(Http()))
 
-print("Credentials ok")
-email_specs = checkemails.unsent_emails()
-for specs in email_specs:
+print("[green]INFO:[/] Credentials ok")
+nr_issues = 0
+nr_success = 0
+for specs in unsent_emails():
     message = create_message(specs)
     sent_message = send_message(service, message)
     time.sleep(config.time_sleep_seconds)
-    print("Done ", sent_message)
+    if sent_message is None or 'error' in sent_message:
+        print(f'[bold red]ERROR:[/] An error was found when sending to {specs.to}')
+        print(sent_message)
+        nr_issues += 1
+    else:
+        nr_success += 1
+        specs.path.rename(specs.path.parent / f'{specs.path.name}.{datetime.datetime.now()}.sent')
+
+print("\n[bold underline]Done[/]")
+if nr_success == 0:
+    print("[yellow]WARNING:[/] No emails successfully sent")
+else:
+    print(f"Successful messages:  [green]{nr_success}[/]")
+if nr_issues == 0 and nr_success > 0:
+    print("No issues found")
+else:
+    print(f"Messages with issues: [red]{nr_issues}[/]")

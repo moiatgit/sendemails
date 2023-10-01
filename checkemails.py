@@ -3,15 +3,15 @@
 # This script checks the emails folder and sumarices what it finds
 
 import sys
-import pathlib
+from pathlib import Path
 import datetime
 from collections import namedtuple
 import config
 
-EmailSpecs = namedtuple('EmailSpecs', ['to', 'subject', 'attachment', 'text'])
+EmailSpecs = namedtuple('EmailSpecs', ['path', 'to', 'subject', 'attachment', 'text'])
 
 
-def get_email_file_contents(path):
+def get_email_file_contents(path: Path):
     """ given a path to a file it returns the tuple:
 
         (result_ok, contents)
@@ -35,7 +35,7 @@ def get_email_file_contents(path):
     to = line_to[len('to: '):]
     subject = line_subject[len('subject: '):]
     if contents[2].strip().startswith('attach: '):
-        attachment = pathlib.Path(contents[2].strip()[len('attach: '):])
+        attachment = Path(contents[2].strip()[len('attach: '):])
         if not attachment.is_file():
             return (False, f'Attachment file not found {attachment}')
         if not attachment.suffix == '.pdf':
@@ -45,25 +45,8 @@ def get_email_file_contents(path):
         attachment = None
         text = '\n'.join(contents[2:])
 
-    return (True, EmailSpecs(to, subject, attachment, text))
+    return (True, EmailSpecs(path, to, subject, attachment, text))
 
-
-def unsent_emails():
-    """ It returns a list of EmailSpecs for the emails found
-        Renames all the files so they get the postfix «current_date».sent
-    """
-    # XXX It shouldn't rename these files until they're actually sent
-    result = []
-    path = pathlib.Path(config.email_folder)
-    if not path.is_dir():
-        return result
-    for entry in list(path.glob('*.txt')):
-        result_ok, specs = get_email_file_contents(entry)
-        if result_ok:
-            result.append(specs)
-            entry.rename(entry.parent / pathlib.Path('%s.%s.sent' % (entry.name,
-                                                                     datetime.date.today())))
-    return result
 
 
 if __name__ == '__main__':
