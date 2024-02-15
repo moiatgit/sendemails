@@ -4,7 +4,6 @@
 
 import sys
 from pathlib import Path
-import datetime
 from collections import namedtuple
 import config
 
@@ -51,7 +50,7 @@ def get_email_file_contents(path: Path):
 
 if __name__ == '__main__':
 
-    path = pathlib.Path(config.email_folder)
+    path = Path(config.email_folder)
 
     if not path.is_dir():
         print("Email container not found: %s" % path)

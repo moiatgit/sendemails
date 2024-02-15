@@ -119,6 +119,7 @@ for specs in unsent_emails():
     else:
         nr_success += 1
         specs.path.rename(specs.path.parent / f'{specs.path.name}.{datetime.datetime.now()}.sent')
+    print(f"\t{specs.to}: [green]OK[/]")
 
 print("\n[bold underline]Done[/]")
 if nr_success == 0:
